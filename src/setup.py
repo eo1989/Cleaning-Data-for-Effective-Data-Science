@@ -96,8 +96,7 @@ def connect_local():
 
 # MongoDB conection
 def connect_mongo():
-    client = MongoClient(port=27017)
-    return client
+    return MongoClient(port=27017)
 
 
 # Utility function
@@ -137,7 +136,7 @@ def make_mongo_biz(client=connect_mongo()):
 
     seed(2)
     info = {}
-    for n in range(50):
+    for _ in range(50):
         # Make a random business
         name = (f"{choice(words)} {choice(words)} "
                 f"{choice(title)}")
@@ -148,24 +147,24 @@ def make_mongo_biz(client=connect_mongo()):
             'phone': info[name]
         }
         db.info.insert_one(biz)
-        
+
     for n in range(5000):
         # Make a random review
         name = choice(list(info))
         price = choice(prices)
         review = {'name': name, 'price': price}
-        
+
         # Usually have a rating
         if (n+5) % 100:
             review['rating'] = randint(1, 10)
-            
+
         # Occasionally denormalize
         if not (n+100) % 137:
             review['phone'] = info[name]
             # But sometimes inconsistently
             if not n % 5:
                 review['phone'] = random_phone()
-            
+
         # Insert business into MongoDB 
         result = db.reviews.insert_one(review)
 
@@ -175,8 +174,8 @@ def make_mongo_biz(client=connect_mongo()):
 def make_dbm_biz(client=connect_mongo()):
     "We assume that make_mongo_biz() has run"
     biz = client.business
-    ratings = dict()
-    
+    ratings = {}
+
     with dbm.open('data/keyval.db', 'n') as db:
         db['DESCRIPTION'] = 'Restaurant information'
         now = datetime.isoformat(datetime.now())
@@ -197,9 +196,9 @@ def make_dbm_biz(client=connect_mongo()):
             else:
                 val = rating 
             db[key] = ratings[key] = val
-        
+
         # Add business info
-        for n, info in enumerate(biz.info.find()):
+        for info in biz.info.find():
             key1 = f"{info['name']}::info::phone"
             key2 = f"{info['name']}::info::cuisine"
             db[key1] = info['phone']
@@ -700,8 +699,8 @@ def read_glarp(cleanup=True):
     # The different thermometers
     places = ['basement', 'lab', 'livingroom', 'outside']
     for therm in places:
-        with gzip.open('data/glarp/%s.gz' % therm) as f:
-            readings = dict()
+        with gzip.open(f'data/glarp/{therm}.gz') as f:
+            readings = {}
             for line in f:
                 Y, m, d, H, M, temp = line.split()
                 readings[datetime(*map(int, 
@@ -711,21 +710,21 @@ def read_glarp(cleanup=True):
     if cleanup:
         # Add in the relatively few missing times
         df = df.asfreq('3T').interpolate()
-        
+
         # Remove reading with implausible jumps
         diffs = df.diff()
         for therm in places:
             errs = diffs.loc[diffs[therm].abs() > 5,
                              therm].index
             df.loc[errs, therm] = None
-            
+
         # Backfill missing temperatures (at start)
         df = df.interpolate().bfill()
 
     # Sort by date but remove from index
     df = df.sort_index().reset_index()
     df = df.rename(columns={'index': 'timestamp'})
-    
+
     return df
 
 

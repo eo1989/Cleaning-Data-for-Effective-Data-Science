@@ -16,14 +16,12 @@ def make_events():
     mins = 366*day
     ts = pd.date_range('2020-01-01', 
                        periods=mins, freq='T')
-    dists = {}
-    
     x = np.arange(mins)
-    dists['A'] = np.sin(x * pi/mins)
+    dists = {'A': np.sin(x * pi/mins)}
     dists['B'] = x/mins
     dists['C'] = np.cos(x*365 * pi/mins)
     dists['D'] = np.ones(x.size) * 0.1
-    
+
     # Create from random distribution, lognormal
     mu, sigma = 1., 0.3 # mean and standard deviation
     s = np.random.lognormal(mu, sigma, mins*20)
