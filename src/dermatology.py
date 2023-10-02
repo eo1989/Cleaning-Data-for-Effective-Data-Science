@@ -55,8 +55,8 @@ targets = {
 # SSL problem with UCI!
 #base = 'https://archive.ics.uci.edu/ml/machine-learning-databases/dermatology/'
 base = 'data/'
-data = base + 'dermatology.data'
-metadata = base + 'dermatology.names'
+data = f'{base}dermatology.data'
+metadata = f'{base}dermatology.names'
 df = pd.read_csv(data, header=None, names=features)
 df['TARGET'] = df.TARGET.map(targets)
 
